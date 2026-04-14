@@ -51,7 +51,7 @@ export default function Dashboard() {
     try {
       const systemPrompt = "You are an elite expert full-stack developer. Your task is to generate a complete, working, single-file HTML website from A to Z that fulfills the user prompt. \n\nRULES:\n1. Output MUST be an enclosed, entire <html> document.\n2. In the <head>, YOU MUST include the Tailwind CSS CDN: <script src=\"https://cdn.tailwindcss.com\"></script> you can also include FontAwesome.\n3. Include a robust aesthetic.\n4. Include any Vanilla Javascript in a <script> tag at the bottom.\n5. YOU MUST RESPOND EXCLUSIVELY WITH A RAW JSON OBJECT and absolutely no other text. Keys: 'code' (the raw HTML string) and 'message' (string summary).";
 
-      const completion = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+      const completion = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { 
            "Content-Type": "application/json"
