@@ -18,6 +18,15 @@ export default function Dashboard() {
   const [apiKey, setApiKey] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedKey = localStorage.getItem("emergent_api_key");
+      if (storedKey) {
+        setApiKey(storedKey);
+      }
+    }
+  }, []);
+
   // Load initial prompt from URL
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -157,7 +166,18 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-white/60 mb-2">Google Gemini API Key (100% Free)</label>
-                  <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIzaSy..." className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold/50" />
+                  <input 
+                    type="password" 
+                    value={apiKey} 
+                    onChange={e => {
+                      setApiKey(e.target.value);
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("emergent_api_key", e.target.value);
+                      }
+                    }} 
+                    placeholder="AIzaSy..." 
+                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold/50" 
+                  />
                   <p className="text-xs text-white/40 mt-2">Get your free key at <strong>aistudio.google.com</strong>. No credit card required.</p>
                 </div>
                 <button onClick={() => setShowSettings(false)} className="w-full mt-4 py-3 bg-gold hover:bg-gold-light text-black font-semibold rounded-lg transition-colors">Save & Close</button>
