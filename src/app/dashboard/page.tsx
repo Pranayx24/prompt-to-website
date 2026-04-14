@@ -15,6 +15,8 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleSendPrompt = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,20 +25,41 @@ export default function Dashboard() {
     setIsGenerating(true);
     setAiMessage(null);
     
+    if (!apiKey) {
+      setTimeout(() => {
+         setAiMessage(`I've prepared a basic structure for: "${prompt}". Please add your OpenAI key in settings for actual generation capabilities.`);
+         setGeneratedCode(`<div className="w-full flex flex-col items-center justify-center p-12 bg-[#1a1a1a] text-white rounded-2xl shadow-2xl border border-white/10">\n  <div className="absolute top-4 left-4 flex gap-2"><div className="w-3 h-3 rounded-full bg-red-500"/><div className="w-3 h-3 rounded-full bg-yellow-500"/><div className="w-3 h-3 rounded-full bg-green-500"/></div>\n  <h1 className="text-4xl font-extrabold mb-6 tracking-tight">Generated Interface</h1>\n  <p className="opacity-70 text-lg text-center max-w-xl bg-black/50 p-6 rounded-xl border border-white/5">"${prompt}"</p>\n</div>`);
+         setIsGenerating(false);
+         setPrompt("");
+      }, 2000);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/generate", {
+      const completion = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        headers: { 
+           "Content-Type": "application/json",
+           "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4-turbo-preview",
+          messages: [
+            { role: "system", content: "You are an expert UI developer. Return valid HTML/React code to render the user request. Respond ONLY with a JSON object containing keys: 'code' (string of valid tailwind HTML) and 'message'." },
+            { role: "user", content: prompt }
+          ],
+          response_format: { type: "json_object" }
+        })
       });
       
-      const data = await res.json();
+      const data = await completion.json();
+      const aiResponse = JSON.parse(data.choices[0].message.content);
       
-      if (data.code) {
-        setGeneratedCode(data.code);
+      if (aiResponse.code) {
+        setGeneratedCode(aiResponse.code);
       }
-      if (data.message) {
-        setAiMessage(data.message);
+      if (aiResponse.message) {
+        setAiMessage(aiResponse.message);
       }
     } catch (error) {
       console.error(error);
@@ -81,7 +104,7 @@ export default function Dashboard() {
         </div>
 
         <div className="p-4 border-t border-white/5 space-y-2">
-          <button className="flex items-center gap-3 text-sm text-white/60 hover:text-white px-2 py-2 rounded-lg hover:bg-white/5 w-full transition-colors">
+          <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-3 text-sm text-white/60 hover:text-white px-2 py-2 rounded-lg hover:bg-white/5 w-full transition-colors">
             <Settings className="w-4 h-4" /> Settings
           </button>
           <button className="flex items-center gap-3 text-sm text-white/60 hover:text-white px-2 py-2 rounded-lg hover:bg-white/5 w-full transition-colors">
@@ -91,8 +114,25 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content: Split Screen */}
-      <main className="flex-1 flex flex-col md:flex-row shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]">
+      <main className="flex-1 flex flex-col md:flex-row shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] relative">
         
+        {/* Settings Modal */}
+        {showSettings && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-[#111] border border-gold/10 shadow-2xl p-6 rounded-2xl w-full max-w-md">
+              <h3 className="text-xl font-bold mb-4">Settings</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">OpenAI API Key</label>
+                  <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-..." className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold/50" />
+                  <p className="text-xs text-white/40 mt-2">Stored locally in your browser session only. Required for Live Generation.</p>
+                </div>
+                <button onClick={() => setShowSettings(false)} className="w-full mt-4 py-3 bg-gold hover:bg-gold-light text-black font-semibold rounded-lg transition-colors">Save & Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Chat / Editor Side */}
         <div className="w-full md:w-1/3 flex flex-col border-r border-white/5 bg-[#0a0a0a] min-w-[320px]">
           <div className="p-4 border-b border-white/5 flex items-center justify-between">
