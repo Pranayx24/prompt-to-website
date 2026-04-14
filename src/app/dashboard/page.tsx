@@ -38,7 +38,7 @@ export default function Dashboard() {
     
     if (!apiKey) {
       setTimeout(() => {
-         setAiMessage(`I've prepared a basic structure for: "${prompt}". Please add your OpenAI key in settings for actual generation capabilities.`);
+         setAiMessage(`I've prepared a basic structure for: "${prompt}". Please get your free Gemini API key from Google AI Studio and add it in Settings to generate.`);
          setGeneratedCode(`<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-[#1a1a1a] flex items-center justify-center min-h-screen p-12 text-white font-sans"><div class="relative w-full max-w-2xl flex flex-col items-center justify-center p-12 bg-[#222] rounded-2xl shadow-2xl border border-white/10"><div class="absolute top-4 left-4 flex gap-2"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div></div><h1 class="text-4xl font-extrabold mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">Generated Interface</h1><p class="opacity-70 text-lg text-center max-w-xl bg-black/50 p-6 rounded-xl border border-white/5">"${prompt}"</p><p class="mt-6 text-sm text-yellow-400/80">Add your API Key in Settings to actually generate this application.</p></div></body></html>`);
          setIsGenerating(false);
          setPrompt("");
@@ -47,14 +47,14 @@ export default function Dashboard() {
     }
 
     try {
-      const completion = await fetch("https://api.openai.com/v1/chat/completions", {
+      const completion = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
         method: "POST",
         headers: { 
            "Content-Type": "application/json",
            "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gemini-1.5-pro",
           messages: [
             { 
               role: "system", 
@@ -147,9 +147,9 @@ export default function Dashboard() {
               <h3 className="text-xl font-bold mb-4">Settings</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-white/60 mb-2">OpenAI API Key</label>
-                  <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="sk-..." className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold/50" />
-                  <p className="text-xs text-white/40 mt-2">Stored locally in your browser session only. Required for Live Generation.</p>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Google Gemini API Key (100% Free)</label>
+                  <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIzaSy..." className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold/50" />
+                  <p className="text-xs text-white/40 mt-2">Get your free key at <strong>aistudio.google.com</strong>. No credit card required.</p>
                 </div>
                 <button onClick={() => setShowSettings(false)} className="w-full mt-4 py-3 bg-gold hover:bg-gold-light text-black font-semibold rounded-lg transition-colors">Save & Close</button>
               </div>
