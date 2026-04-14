@@ -58,25 +58,34 @@ export default function Dashboard() {
           messages: [
             { 
               role: "system", 
-              content: "You are an elite expert full-stack developer. The user will describe a web application. Your task is to generate a complete, working, single-file HTML website from A to Z that fulfills their prompt. \n\nRULES:\n1. Output MUST be an enclosed, entire <html> document.\n2. In the <head>, YOU MUST include the Tailwind CSS CDN: <script src=\"https://cdn.tailwindcss.com\"></script> and any Google Fonts to make it look premium (e.g., Inter, Roboto). You can also include FontAwesome or similar for icons.\n3. Include a robust dark-mode or premium aesthetic, as requested. The UI must look like a billion-dollar startup.\n4. Include any necessary logic using Vanilla Javascript in a <script> tag at the bottom.\n5. Respond ONLY with a JSON object containing two keys: 'code' (the raw, absolute complete HTML string) and 'message' (a 1-sentence summary of what you built)." 
+              content: "You are an elite expert full-stack developer. Your task is to generate a complete, working, single-file HTML website from A to Z that fulfills the user prompt. \n\nRULES:\n1. Output MUST be an enclosed, entire <html> document.\n2. In the <head>, YOU MUST include the Tailwind CSS CDN: <script src=\"https://cdn.tailwindcss.com\"></script> you can also include FontAwesome.\n3. Include a robust aesthetic.\n4. Include any Vanilla Javascript in a <script> tag at the bottom.\n5. YOU MUST RESPOND EXCLUSIVELY WITH A RAW JSON OBJECT and absolutely no other text. Keys: 'code' (the raw HTML string) and 'message' (string summary)."
             },
             { role: "user", content: prompt }
-          ],
-          response_format: { type: "json_object" }
+          ]
         })
       });
       
       const data = await completion.json();
       
+      if (!completion.ok || data.error) {
+        setAiMessage(`API Error: ${data.error?.message || "Unknown error"}`);
+        return;
+      }
+      
       // Robust JSON Parsing to handle markdown wrap
       let aiResponse: any = {};
       try {
-        const rawContent = data.choices[0].message.content;
-        const cleanedContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
-        aiResponse = JSON.parse(cleanedContent);
+        let rawContent = data.choices[0].message.content;
+        if (rawContent.startsWith("\`\`\`json")) {
+           rawContent = rawContent.replace(/^\`\`\`json/, "").replace(/\`\`\`$/, "");
+        } else if (rawContent.startsWith("\`\`\`")) {
+           rawContent = rawContent.replace(/^\`\`\`/, "").replace(/\`\`\`$/, "");
+        }
+        aiResponse = JSON.parse(rawContent.trim());
       } catch (e) {
         console.error("Failed to parse JSON response:", e, data);
-        aiResponse = { message: "Failed to parse the generation payload.", code: null };
+        setAiMessage(`Error parsing response: ${data.choices?.[0]?.message?.content?.substring(0, 50) || "No content returned"}...`);
+        return;
       }
       
       if (aiResponse.code) {
