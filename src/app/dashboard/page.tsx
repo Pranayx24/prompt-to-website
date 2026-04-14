@@ -13,15 +13,38 @@ export default function Dashboard() {
 
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
 
-  const handleSendPrompt = (e: React.FormEvent) => {
+  const handleSendPrompt = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
+    
     setIsGenerating(true);
-    setTimeout(() => {
+    setAiMessage(null);
+    
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      
+      const data = await res.json();
+      
+      if (data.code) {
+        setGeneratedCode(data.code);
+      }
+      if (data.message) {
+        setAiMessage(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      setAiMessage("Failed to generate code.");
+    } finally {
       setIsGenerating(false);
       setPrompt("");
-    }, 3000);
+    }
   };
 
   return (
@@ -86,8 +109,8 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-gold ml-2">Emergent AI</span>
-              <div className="bg-white/5 p-3 rounded-xl rounded-tl-none border border-white/5 text-sm text-white/80">
-                I'm ready. Describe the website you want to build and let's get started.
+              <div className="bg-white/5 p-3 rounded-xl rounded-tl-none border border-white/5 text-sm text-white/80 whitespace-pre-wrap">
+                {aiMessage || "I'm ready. Describe the website you want to build and let's get started."}
               </div>
             </div>
 
@@ -147,31 +170,35 @@ export default function Dashboard() {
           </div>
 
           {/* Render Area */}
-          <div className="flex-1 p-2 md:p-8 overflow-y-auto">
-            <div className="w-full min-h-full bg-white text-black rounded-xl border border-white/10 shadow-2xl overflow-hidden flex items-center justify-center relative">
-              {/* Fake web preview */}
-              <div className="absolute inset-0 bg-[#f8f9fa] flex flex-col">
-                <header className="h-16 border-b flex items-center justify-between px-8 bg-white">
-                  <div className="font-bold text-xl tracking-tight">Acme<span className="text-blue-600">Corp</span></div>
-                  <nav className="flex gap-6 text-sm font-medium text-gray-600">
-                    <div>Products</div>
-                    <div>Solutions</div>
-                    <div>Pricing</div>
-                  </nav>
-                  <button className="px-4 py-2 bg-black text-white rounded-md text-sm font-medium">Get Started</button>
-                </header>
-                <main className="flex-1 p-12 text-center max-w-4xl mx-auto flex flex-col items-center justify-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-8">
-                    New Update 2.0
-                  </div>
-                  <h1 className="text-6xl font-extrabold tracking-tight text-gray-900 mb-6">Build your next great idea.</h1>
-                  <p className="text-xl text-gray-500 mb-10 max-w-2xl">This is a live preview of the generated code. Any changes you request will automatically reflect here in real-time.</p>
-                  <div className="flex gap-4">
-                     <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-lg shadow-blue-500/30">Start Building</button>
-                     <button className="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 rounded-lg font-medium shadow-sm">Read the Docs</button>
-                  </div>
-                </main>
-              </div>
+          <div className="flex-1 p-2 md:p-8 overflow-y-auto w-full">
+            <div className="w-full min-h-full bg-white text-black rounded-xl border border-white/10 shadow-2xl overflow-hidden flex items-start justify-center relative">
+              {generatedCode ? (
+                <div className="absolute inset-0 overflow-y-auto w-full flex flex-col" dangerouslySetInnerHTML={{ __html: generatedCode }} />
+              ) : (
+                <div className="absolute inset-0 bg-[#f8f9fa] flex flex-col">
+                  {/* Fake web preview */}
+                  <header className="h-16 border-b flex items-center justify-between px-8 bg-white shrink-0">
+                    <div className="font-bold text-xl tracking-tight">Acme<span className="text-blue-600">Corp</span></div>
+                    <nav className="flex gap-6 text-sm font-medium text-gray-600">
+                      <div>Products</div>
+                      <div>Solutions</div>
+                      <div>Pricing</div>
+                    </nav>
+                    <button className="px-4 py-2 bg-black text-white rounded-md text-sm font-medium">Get Started</button>
+                  </header>
+                  <main className="flex-1 p-12 text-center w-full mx-auto flex flex-col items-center justify-center">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-sm font-medium mb-8">
+                      New Update 2.0
+                    </div>
+                    <h1 className="text-6xl font-extrabold tracking-tight text-gray-900 mb-6">Build your next great idea.</h1>
+                    <p className="text-xl text-gray-500 mb-10 max-w-2xl">This is a live preview of the generated code. Any changes you request will automatically reflect here in real-time.</p>
+                    <div className="flex gap-4">
+                       <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-lg shadow-blue-500/30">Start Building</button>
+                       <button className="px-6 py-3 bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 rounded-lg font-medium shadow-sm">Read the Docs</button>
+                    </div>
+                  </main>
+                </div>
+              )}
             </div>
           </div>
         </div>
