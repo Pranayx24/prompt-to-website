@@ -43,9 +43,12 @@ export default function Dashboard() {
            "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "gpt-4-turbo-preview",
+          model: "gpt-4o",
           messages: [
-            { role: "system", content: "You are an expert UI developer. Return valid HTML/React code to render the user request. Respond ONLY with a JSON object containing keys: 'code' (string of valid tailwind HTML) and 'message'." },
+            { 
+              role: "system", 
+              content: "You are an elite expert full-stack developer. The user will describe a web application. Your task is to generate a complete, working, single-file HTML website from A to Z that fulfills their prompt. \n\nRULES:\n1. Output MUST be an enclosed, entire <html> document.\n2. In the <head>, YOU MUST include the Tailwind CSS CDN: <script src=\"https://cdn.tailwindcss.com\"></script> and any Google Fonts to make it look premium (e.g., Inter, Roboto). You can also include FontAwesome or similar for icons.\n3. Include a robust dark-mode or premium aesthetic, as requested. The UI must look like a billion-dollar startup.\n4. Include any necessary logic using Vanilla Javascript in a <script> tag at the bottom.\n5. Respond ONLY with a JSON object containing two keys: 'code' (the raw, absolute complete HTML string) and 'message' (a 1-sentence summary of what you built)." 
+            },
             { role: "user", content: prompt }
           ],
           response_format: { type: "json_object" }
@@ -213,7 +216,7 @@ export default function Dashboard() {
           <div className="flex-1 p-2 md:p-8 overflow-y-auto w-full">
             <div className="w-full min-h-full bg-white text-black rounded-xl border border-white/10 shadow-2xl overflow-hidden flex items-start justify-center relative">
               {generatedCode ? (
-                <div className="absolute inset-0 overflow-y-auto w-full flex flex-col" dangerouslySetInnerHTML={{ __html: generatedCode }} />
+                <iframe className="absolute inset-0 w-full h-full border-none bg-white" srcDoc={generatedCode} sandbox="allow-scripts allow-same-origin allow-popups" title="Generated Site" />
               ) : (
                 <div className="absolute inset-0 bg-[#f8f9fa] flex flex-col">
                   {/* Fake web preview */}
