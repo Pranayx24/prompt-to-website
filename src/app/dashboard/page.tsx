@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, LayoutTemplate, Settings, User, MessageSquare, Code, Play, Download, Zap } from "lucide-react";
 import Link from "next/link";
 
@@ -18,6 +18,17 @@ export default function Dashboard() {
   const [apiKey, setApiKey] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
+  // Load initial prompt from URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialPrompt = urlParams.get("prompt");
+      if (initialPrompt && !prompt) {
+        setPrompt(initialPrompt);
+      }
+    }
+  }, []);
+
   const handleSendPrompt = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
@@ -28,7 +39,7 @@ export default function Dashboard() {
     if (!apiKey) {
       setTimeout(() => {
          setAiMessage(`I've prepared a basic structure for: "${prompt}". Please add your OpenAI key in settings for actual generation capabilities.`);
-         setGeneratedCode(`<div className="w-full flex flex-col items-center justify-center p-12 bg-[#1a1a1a] text-white rounded-2xl shadow-2xl border border-white/10">\n  <div className="absolute top-4 left-4 flex gap-2"><div className="w-3 h-3 rounded-full bg-red-500"/><div className="w-3 h-3 rounded-full bg-yellow-500"/><div className="w-3 h-3 rounded-full bg-green-500"/></div>\n  <h1 className="text-4xl font-extrabold mb-6 tracking-tight">Generated Interface</h1>\n  <p className="opacity-70 text-lg text-center max-w-xl bg-black/50 p-6 rounded-xl border border-white/5">"${prompt}"</p>\n</div>`);
+         setGeneratedCode(`<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-[#1a1a1a] flex items-center justify-center min-h-screen p-12 text-white font-sans"><div class="relative w-full max-w-2xl flex flex-col items-center justify-center p-12 bg-[#222] rounded-2xl shadow-2xl border border-white/10"><div class="absolute top-4 left-4 flex gap-2"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div></div><h1 class="text-4xl font-extrabold mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">Generated Interface</h1><p class="opacity-70 text-lg text-center max-w-xl bg-black/50 p-6 rounded-xl border border-white/5">"${prompt}"</p><p class="mt-6 text-sm text-yellow-400/80">Add your API Key in Settings to actually generate this application.</p></div></body></html>`);
          setIsGenerating(false);
          setPrompt("");
       }, 2000);
@@ -56,7 +67,17 @@ export default function Dashboard() {
       });
       
       const data = await completion.json();
-      const aiResponse = JSON.parse(data.choices[0].message.content);
+      
+      // Robust JSON Parsing to handle markdown wrap
+      let aiResponse: any = {};
+      try {
+        const rawContent = data.choices[0].message.content;
+        const cleanedContent = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
+        aiResponse = JSON.parse(cleanedContent);
+      } catch (e) {
+        console.error("Failed to parse JSON response:", e, data);
+        aiResponse = { message: "Failed to parse the generation payload.", code: null };
+      }
       
       if (aiResponse.code) {
         setGeneratedCode(aiResponse.code);
