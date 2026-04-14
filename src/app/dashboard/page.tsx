@@ -15,17 +15,10 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState("");
+  
+  // Directly injecting your API key into the code!
+  const [apiKey, setApiKey] = useState("AIzaSyBhFGIAWh2uhHyHv7gjieRTCljWLGPOV3s");
   const [showSettings, setShowSettings] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedKey = localStorage.getItem("emergent_api_key");
-      if (storedKey) {
-        setApiKey(storedKey);
-      }
-    }
-  }, []);
 
   // Load initial prompt from URL
   useEffect(() => {
